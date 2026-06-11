@@ -629,18 +629,18 @@ function buildTgCaption(a){
   const m = a.match;
   const total = a.sels.reduce((acc,s)=>acc*s.odd,1);
   const resolved = a.resolved;
-  let txt = '⚽ *ALERTA MUNDIAL 2026*\n';
+  let txt = '⚽ ALERTA MUNDIAL 2026\n';
   if(m){
-    txt += `${flEmoji(m.h)} *${m.h}* vs ${flEmoji(m.a)} *${m.a}*\n`;
+    txt += `${flEmoji(m.h)} ${m.h} vs ${flEmoji(m.a)} ${m.a}\n`;
     txt += `🏟 Grupo ${m.g} · Jornada ${m.j}\n`;
   }
-  txt += `📊 Confianza: *${a.conf}%*\n`;
-  if(a.evData){const s=a.evData.ev>=0?'+':''; txt+=`📈 Valor: *${s}${a.evData.ev.toFixed(1)}%*\n`;}
+  txt += `📊 Confianza: ${a.conf}%\n`;
+  if(a.evData){const s=a.evData.ev>=0?'+':''; txt+=`📈 Valor: ${s}${a.evData.ev.toFixed(1)}%\n`;}
   if(resolved){
     const icon = resolved==='win'?'✅':resolved==='loss'?'❌':'➖';
-    txt += `${icon} Resultado: *${resolved==='win'?'GANADA':resolved==='loss'?'PERDIDA':'VOID'}*\n`;
+    txt += `${icon} Resultado: ${resolved==='win'?'GANADA':resolved==='loss'?'PERDIDA':'VOID'}\n`;
   }
-  txt += `\n🎯 _Alerta TS AI · TrueStats AI_`;
+  txt += `\n🎯 Alerta TS AI · TrueStats AI`;
   return txt;
 }
 
