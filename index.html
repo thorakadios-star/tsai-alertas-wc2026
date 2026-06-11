@@ -214,13 +214,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="slbl">Apuesta</div>
     <div class="row2">
       <div class="field"><label>Casa de apuestas</label><input type="text" id="book" placeholder="Bet365…"></div>
-      <div class="field"><label>Tipo</label><select id="btype"><option>Simple</option><option selected>Combinada</option><option>Sistema</option></select></div>
+      <div class="field"><label>Tipo</label><select id="btype" onchange="autoFillValue()"><option>Simple</option><option selected>Combinada</option><option>Sistema</option></select></div>
     </div>
     <div class="row2">
-      <div class="field"><label>Stake (€)</label><input type="number" id="stake" placeholder="10" min="0" step="0.5"></div>
+      <div class="field"><label>Stake (U)</label><input type="number" id="stake" placeholder="10" min="0" step="0.5"></div>
       <div class="field">
         <label>Confianza <span class="conf-val" id="confval">75%</span></label>
-        <div class="conf-row"><input type="range" id="conf" min="50" max="99" value="75" oninput="document.getElementById('confval').textContent=this.value+'%'"></div>
+        <div class="conf-row"><input type="range" id="conf" min="50" max="99" value="75" oninput="document.getElementById('confval').textContent=this.value+'%';autoFillValue()"></div>
       </div>
     </div>
 
@@ -236,8 +236,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="vbox">
       <div class="vbox-t">Valor esperado</div>
       <div class="row2" style="margin-bottom:8px">
-        <div class="field" style="margin-bottom:0"><label>Cuota de la casa</label><input type="number" id="vodd" placeholder="2.50" step="0.01" min="1.01" oninput="calcV()"></div>
-        <div class="field" style="margin-bottom:0"><label>Mi probabilidad (%)</label><input type="number" id="vprob" placeholder="45" step="0.1" min="1" max="99" oninput="calcV()"></div>
+        <div class="field" style="margin-bottom:0"><label>Cuota (auto)</label><input type="number" id="vodd" placeholder="Auto" step="0.01" min="1.01" readonly style="background:var(--bg);cursor:default" oninput="calcV()"></div>
+        <div class="field" style="margin-bottom:0"><label>Probabilidad AI (%)</label><input type="number" id="vprob" placeholder="Auto" step="0.1" min="1" max="99" readonly style="background:var(--bg);cursor:default"></div>
       </div>
       <div class="vgrid">
         <div><div class="vlbl">Cuota justa</div><div class="vres" id="vfair">—</div></div>
@@ -435,10 +435,11 @@ function addSel(){
   const ml=curMatch?`${fl(curMatch.h)} ${curMatch.h} vs ${fl(curMatch.a)} ${curMatch.a}`:'(sin partido)';
   sels.push({match:ml,pick,odd});
   renderSels();
+  autoFillValue();
   document.getElementById('spick').value='';document.getElementById('sodd').value='';
   document.getElementById('spick').focus();
 }
-function removeSel(i){sels.splice(i,1);renderSels();}
+function removeSel(i){sels.splice(i,1);renderSels();autoFillValue();}
 function renderSels(){
   document.getElementById('slist').innerHTML=sels.map((s,i)=>`
     <li class="sitem">
@@ -446,6 +447,28 @@ function renderSels(){
       <span class="sitem-odd">@${s.odd.toFixed(2)}</span>
       <button class="del" onclick="removeSel(${i})" title="Eliminar">×</button>
     </li>`).join('');
+}
+
+
+function autoFillValue(){
+  const btype = document.getElementById('btype').value;
+  const conf = parseInt(document.getElementById('conf').value);
+  // Probabilidad AI = confianza slider
+  document.getElementById('vprob').value = conf;
+  // Cuota auto: combinada/sistema = producto total, simple = primera seleccion
+  let odd = null;
+  if(sels.length > 0){
+    if(btype === 'Simple'){
+      odd = sels[sels.length-1].odd;
+    } else {
+      odd = sels.reduce((acc,s)=>acc*s.odd, 1);
+    }
+    document.getElementById('vodd').value = odd.toFixed(2);
+  } else {
+    document.getElementById('vodd').value = '';
+    document.getElementById('vprob').value = conf;
+  }
+  calcV();
 }
 
 function generate(){
@@ -526,7 +549,7 @@ function buildCardHTML(a,forCapture=false){
           ${teamsHtml}
           <div class="ac-stake-box">
             <div class="ac-stake-lbl">STAKE</div>
-            <div class="ac-stake"><span>€</span>${a.stake}</div>
+            <div class="ac-stake"><span>U </span>${a.stake}</div>
           </div>
         </div>
       </div>
@@ -534,7 +557,7 @@ function buildCardHTML(a,forCapture=false){
         ${m?`<span class="ac-mpill"><strong>Grupo ${m.g} · J${m.j}</strong></span>`:''}
         ${m?`<span class="ac-mpill">${dateStr} · ${timeStr}</span>`:''}
         <span class="ac-mpill">Odd: <strong>${total.toFixed(2)}</strong></span>
-        <span class="ac-mpill">Retorno: <strong style="color:#185FA5">€${potential}</strong></span>
+        <span class="ac-mpill">Retorno: <strong style="color:#185FA5">U${potential}</strong></span>
         ${evPill}
       </div>
       <div class="ac-sels">${selesHtml}</div>
@@ -545,8 +568,8 @@ function buildCardHTML(a,forCapture=false){
         <span class="ac-conf-pct">${a.conf}%</span>
       </div>
       <div class="ac-footer">
-        <div class="ac-fl"><div class="lbl">RETORNO POTENCIAL</div><div class="val">€${potential}</div></div>
-        <div class="ac-fr"><div class="lbl">BENEFICIO NETO</div><div class="val">€${profit}</div><div class="profit">+€${profit} si acierta</div></div>
+        <div class="ac-fl"><div class="lbl">RETORNO POTENCIAL</div><div class="val">U${potential}</div></div>
+        <div class="ac-fr"><div class="lbl">BENEFICIO NETO</div><div class="val">U${profit}</div><div class="profit">+U${profit} si acierta</div></div>
       </div>
       <div class="ac-logobar">
         <span class="lb-left">Alerta TS AI</span>
@@ -618,7 +641,7 @@ function buildText(id){
   let txt=`⚽ *ALERTA MUNDIAL 2026*\n`;
   if(m)txt+=`${fl(m.h)} *${m.h}* vs ${fl(m.a)} *${m.a}*  ·  Grupo ${m.g} J${m.j}\n📅 ${fmtDate(m.k)}  ${fmtTime(m.k)}\n`;
   txt+=`📌 *${a.btype.toUpperCase()}*${a.book?' · '+a.book:''}\n`;
-  txt+=`💰 Stake: €${a.stake}  ·  Odd: *${total.toFixed(2)}*  ·  Retorno: *€${potential}* (+€${profit})\n`;
+  txt+=`💰 Stake: ${a.stake}U  ·  Odd: *${total.toFixed(2)}*  ·  Retorno: *${potential}U* (+${profit}U)\n`;
   txt+=`📊 Confianza: *${a.conf}%*`;
   if(a.evData){const s=a.evData.ev>=0?'+':'';txt+=`  ·  Valor: *${s}${a.evData.ev.toFixed(1)}%*`;}
   txt+=`\n\n*Selecciones:*\n`;
