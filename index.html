@@ -527,41 +527,55 @@ async function canvasToBlob(canvas){
 
 async function sendAlertToTelegram(id){
   const a = alerts.find(x=>x.id===id);
-  if(!a) return;
+  if(!a){ showToast('Alerta no encontrada'); return; }
 
-  // Show countdown modal
+  // 1. Render banner offscreen and send immediately
+  const bannerWrap = document.createElement('div');
+  bannerWrap.style.cssText = 'position:fixed;left:-9999px;top:0;background:#111116;z-index:-1';
+  bannerWrap.innerHTML = buildBannerHTML();
+  document.body.appendChild(bannerWrap);
+
+  try{
+    showToast('📤 Enviando cabecera…');
+    await new Promise(r=>setTimeout(r,300)); // allow render
+    const bc = await captureElement(bannerWrap.querySelector('#tg-banner'));
+    const bb = await canvasToBlob(bc);
+    const ok = await tgSendPhoto(bb, '⚽ *ALERTA PRONÓSTICO AI* · TrueStats AI\nVIP WC 2026 · Apuesta en breve… 🎯');
+    if(ok) showToast('✅ Cabecera enviada · enviando en 10s…');
+    else showToast('❌ Error al enviar cabecera');
+  }catch(e){
+    showToast('❌ Error cabecera: '+e.message);
+    console.error('Banner error:', e);
+  }
+  document.body.removeChild(bannerWrap);
+
+  // 2. Render card offscreen (stays hidden until callback fires)
+  const captureContainer = document.getElementById('capture-container');
+  captureContainer.innerHTML = '';
+  const cardWrap = document.createElement('div');
+  cardWrap.id = 'tg-card-wrap';
+  cardWrap.style.cssText = 'background:#ffffff;padding:0;width:420px';
+  cardWrap.innerHTML = buildCardHTML(a, true);
+  captureContainer.appendChild(cardWrap);
+
+  // 3. Start countdown — on complete, capture and send card
   showCountdown(async () => {
-    // Step 2: capture and send card
-    const cardEl = document.getElementById('tg-card-capture');
-    if(!cardEl){ showToast('Error al capturar la card'); return; }
     try{
       showToast('📤 Enviando card…');
+      const cardEl = document.getElementById('tg-card-wrap');
+      if(!cardEl){ showToast('❌ Card no encontrada en DOM'); return; }
+      await new Promise(r=>setTimeout(r,200)); // allow render
       const canvas = await captureElement(cardEl);
       const blob = await canvasToBlob(canvas);
       const ok = await tgSendPhoto(blob, buildTgCaption(a));
-      if(ok) showToast('✅ Card enviada al grupo');
+      if(ok) showToast('✅ Card enviada al grupo 🎯');
       else showToast('❌ Error al enviar la card');
-    }catch(e){ showToast('❌ Error: '+e.message); }
-    document.getElementById('capture-container').innerHTML='';
+    }catch(e){
+      showToast('❌ Error card: '+e.message);
+      console.error('Card capture error:', e);
+    }
+    document.getElementById('capture-container').innerHTML = '';
   });
-
-  // Step 1: capture and send banner immediately
-  const bannerWrap = document.createElement('div');
-  bannerWrap.style.cssText = 'position:fixed;left:-9999px;top:0;background:#111116';
-  bannerWrap.innerHTML = buildBannerHTML();
-  document.body.appendChild(bannerWrap);
-  try{
-    showToast('📤 Enviando cabecera…');
-    const bc = await captureElement(bannerWrap.querySelector('#tg-banner'));
-    const bb = await canvasToBlob(bc);
-    const ok = await tgSendPhoto(bb, '⚽ *ALERTA PRONÓSTICO AI* · TrueStats AI\nVIP WC 2026 · La apuesta llega en 60 segundos…');
-    if(ok) showToast('✅ Cabecera enviada · contando 60s…');
-  }catch(e){ console.error(e); }
-  document.body.removeChild(bannerWrap);
-
-  // Prepare card capture element offscreen
-  const captureEl = document.getElementById('capture-container');
-  captureEl.innerHTML = buildCardHTML(a, true);
 }
 
 function buildTgCaption(a){
@@ -581,14 +595,14 @@ function buildTgCaption(a){
 
 // ── COUNTDOWN MODAL ──
 function showCountdown(onComplete){
-  let secs = 60;
+  let secs = 10;
   const overlay = document.createElement('div');
   overlay.id = 'countdown-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:9999';
   overlay.innerHTML = `
     <div style="background:#111116;border:1px solid #2c2c38;border-radius:16px;padding:2.5rem 3rem;text-align:center;min-width:280px">
-      <div style="font-size:11px;color:#555560;letter-spacing:.16em;text-transform:uppercase;margin-bottom:1rem;font-family:-apple-system,sans-serif">Cabecera enviada · enviando card en</div>
-      <div id="cd-num" style="font-size:72px;font-weight:800;color:#d8d8de;line-height:1;font-family:-apple-system,sans-serif;letter-spacing:-.04em">60</div>
+      <div style="font-size:11px;color:#555560;letter-spacing:.16em;text-transform:uppercase;margin-bottom:1rem;font-family:-apple-system,sans-serif">Apuesta en breve · enviando en</div>
+      <div id="cd-num" style="font-size:72px;font-weight:800;color:#d8d8de;line-height:1;font-family:-apple-system,sans-serif;letter-spacing:-.04em">10</div>
       <div style="font-size:11px;color:#444;letter-spacing:.1em;text-transform:uppercase;margin-top:.5rem;font-family:-apple-system,sans-serif">segundos</div>
       <div style="margin-top:1.5rem;height:3px;background:#1e1e26;border-radius:2px;overflow:hidden">
         <div id="cd-bar" style="height:100%;width:100%;background:#b0b0bc;border-radius:2px;transition:width 1s linear"></div>
@@ -602,7 +616,7 @@ function showCountdown(onComplete){
     const numEl = document.getElementById('cd-num');
     const barEl = document.getElementById('cd-bar');
     if(numEl) numEl.textContent = secs;
-    if(barEl) barEl.style.width = (secs/60*100)+'%';
+    if(barEl) barEl.style.width = (secs/10*100)+'%';
     if(secs <= 0){
       clearInterval(interval);
       window._cdInterval = null;
