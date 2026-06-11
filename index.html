@@ -107,17 +107,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ac-stake-box{text-align:right;flex-shrink:0}
 .ac-stake-lbl{font-size:9px;color:rgba(255,255,255,.65);letter-spacing:.1em}
 .ac-stake{font-size:22px;font-weight:700;color:#fff;line-height:1}
-.ac-stake span{font-size:11px;font-weight:400;opacity:.8}
+.ac-stake span{font-size:12px;font-weight:400;opacity:.8}
 .ac-meta{display:flex;gap:5px;flex-wrap:wrap;padding:.5rem 1rem;border-bottom:1px solid var(--bdr-lt)}
 .ac-mpill{background:var(--bg);border:1px solid var(--bdr);border-radius:20px;padding:2px 7px;font-size:10px;color:var(--text2)}
 .ac-mpill strong{color:var(--text1);font-weight:600}
 .ac-sels{padding:.625rem 1rem}
-.ac-sel{display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid var(--bdr-lt)}
-.ac-sel:last-child{border-bottom:none}
-.ac-sel-l{flex:1}
+.ac-sel-group{padding:7px 0;border-bottom:1px solid var(--bdr-lt)}
+.ac-sel-group:last-child{border-bottom:none}
+.ac-sel-match-hdr{font-size:11px;font-weight:600;color:var(--text1);margin-bottom:5px;display:flex;align-items:center;gap:4px}
+.ac-sel-row{display:flex;align-items:center;justify-content:space-between;padding:2px 0 2px 6px;border-left:2px solid var(--blue)}
+.ac-sel-row+.ac-sel-row{margin-top:4px}
+
+.ac-sel-l{width:100%}
 .ac-sel-match{font-size:11px;font-weight:600;color:var(--text1)}
 .ac-sel-pick{font-size:10px;color:var(--text2);margin-top:1px}
-.ac-sel-odd{font-size:13px;font-weight:700;color:var(--blue);white-space:nowrap}
+.ac-sel-odd{font-size:13px;font-weight:700;color:var(--blue);white-space:nowrap;flex-shrink:0}
 .ac-analysis{margin:0 1rem .625rem;font-size:11px;color:var(--text2);line-height:1.6;padding:8px 10px;background:var(--bg);border-left:3px solid var(--blue);border-radius:0}
 .ac-conf{display:flex;align-items:center;gap:8px;padding:.375rem 1rem .5rem}
 .ac-conf-lbl{font-size:10px;color:var(--text2);white-space:nowrap}
@@ -300,20 +304,16 @@ const TG_API   = 'https://api.telegram.org/bot' + TG_TOKEN;
 document.getElementById('hdr-logo').src = LOGO_SRC;
 
 // ── FLAGS ──
-const F={
-  'México':'🇲🇽','Sudáfrica':'🇿🇦','República de Corea':'🇰🇷','Chequia':'🇨🇿',
-  'Canadá':'🇨🇦','Bosnia y Herzegovina':'🇧🇦','Estados Unidos':'🇺🇸','Paraguay':'🇵🇾',
-  'Catar':'🇶🇦','Suiza':'🇨🇭','Brasil':'🇧🇷','Marruecos':'🇲🇦','Haití':'🇭🇹',
-  'Escocia':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Australia':'🇦🇺','Turquía':'🇹🇷','Alemania':'🇩🇪','Curaçao':'🇨🇼',
-  'Países Bajos':'🇳🇱','Japón':'🇯🇵','Costa de Marfil':'🇨🇮','Ecuador':'🇪🇨',
-  'Suecia':'🇸🇪','Túnez':'🇹🇳','España':'🇪🇸','Cabo Verde':'🇨🇻','Bélgica':'🇧🇪',
-  'Egipto':'🇪🇬','Arabia Saudí':'🇸🇦','Uruguay':'🇺🇾','Irán':'🇮🇷','Nueva Zelanda':'🇳🇿',
-  'Francia':'🇫🇷','Senegal':'🇸🇳','Irak':'🇮🇶','Noruega':'🇳🇴','Argentina':'🇦🇷',
-  'Argelia':'🇩🇿','Austria':'🇦🇹','Jordania':'🇯🇴','Portugal':'🇵🇹','RD Congo':'🇨🇩',
-  'Inglaterra':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Croacia':'🇭🇷','Ghana':'🇬🇭','Panamá':'🇵🇦',
-  'Uzbekistán':'🇺🇿','Colombia':'🇨🇴'
-};
-const fl = t => F[t]||'🏳️';
+const FC={'México':'mx','Sudáfrica':'za','República de Corea':'kr','Chequia':'cz','Canadá':'ca','Bosnia y Herzegovina':'ba','Estados Unidos':'us','Paraguay':'py','Catar':'qa','Suiza':'ch','Brasil':'br','Marruecos':'ma','Haití':'ht','Escocia':'gb-sct','Australia':'au','Turquía':'tr','Alemania':'de','Curaçao':'cw','Países Bajos':'nl','Japón':'jp','Costa de Marfil':'ci','Ecuador':'ec','Suecia':'se','Túnez':'tn','España':'es','Cabo Verde':'cv','Bélgica':'be','Egipto':'eg','Arabia Saudí':'sa','Uruguay':'uy','Irán':'ir','Nueva Zelanda':'nz','Francia':'fr','Senegal':'sn','Irak':'iq','Noruega':'no','Argentina':'ar','Argelia':'dz','Austria':'at','Jordania':'jo','Portugal':'pt','RD Congo':'cd','Inglaterra':'gb-eng','Croacia':'hr','Ghana':'gh','Panamá':'pa','Uzbekistán':'uz','Colombia':'co'};
+function fl(t){
+  const code=FC[t];
+  if(!code) return '<span style="font-size:16px">🏳️</span>';
+  return '<img src="https://flagcdn.com/24x18/'+code+'.png" style="width:24px;height:18px;vertical-align:middle;margin-right:2px" alt="'+t+'">';
+}
+function flEmoji(t){
+  const em={"México":"🇲🇽","Sudáfrica":"🇿🇦","República de Corea":"🇰🇷","Chequia":"🇨🇿","Canadá":"🇨🇦","Bosnia y Herzegovina":"🇧🇦","Estados Unidos":"🇺🇸","Paraguay":"🇵🇾","Catar":"🇶🇦","Suiza":"🇨🇭","Brasil":"🇧🇷","Marruecos":"🇲🇦","Haití":"🇭🇹","Escocia":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","Australia":"🇦🇺","Turquía":"🇹🇷","Alemania":"🇩🇪","Curaçao":"🇨🇼","Países Bajos":"🇳🇱","Japón":"🇯🇵","Costa de Marfil":"🇨🇮","Ecuador":"🇪🇨","Suecia":"🇸🇪","Túnez":"🇹🇳","España":"🇪🇸","Cabo Verde":"🇨🇻","Bélgica":"🇧🇪","Egipto":"🇪🇬","Arabia Saudí":"🇸🇦","Uruguay":"🇺🇾","Irán":"🇮🇷","Nueva Zelanda":"🇳🇿","Francia":"🇫🇷","Senegal":"🇸🇳","Irak":"🇮🇶","Noruega":"🇳🇴","Argentina":"🇦🇷","Argelia":"🇩🇿","Austria":"🇦🇹","Jordania":"🇯🇴","Portugal":"🇵🇹","RD Congo":"🇨🇩","Inglaterra":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Croacia":"🇭🇷","Ghana":"🇬🇭","Panamá":"🇵🇦","Uzbekistán":"🇺🇿","Colombia":"🇨🇴"};
+  return em[t]||'🏳️';
+}
 
 // ── MATCHES ──
 const MATCHES=[
@@ -398,7 +398,7 @@ MATCHES.forEach(m=>{
   const gl=`Grupo ${m.g} · Jornada ${m.j}`;
   if(gl!==lastG){const og=document.createElement('optgroup');og.label=gl;msel.appendChild(og);lastG=gl;}
   const o=document.createElement('option');o.value=m.id;
-  o.textContent=`${fl(m.h)} ${m.h}  vs  ${fl(m.a)} ${m.a}`;
+  o.textContent=`${flEmoji(m.h)} ${m.h}  vs  ${flEmoji(m.a)} ${m.a}`;
   msel.lastChild.appendChild(o);
 });
 
@@ -417,8 +417,8 @@ function onMatch(){
   const box=document.getElementById('mprev');
   if(!m){box.classList.remove('on');return;}
   box.classList.add('on');
-  document.getElementById('pfh').textContent=fl(m.h);document.getElementById('pnh').textContent=m.h;
-  document.getElementById('pfa').textContent=fl(m.a);document.getElementById('pna').textContent=m.a;
+  document.getElementById('pfh').innerHTML=fl(m.h);document.getElementById('pnh').textContent=m.h;
+  document.getElementById('pfa').innerHTML=fl(m.a);document.getElementById('pna').textContent=m.a;
   document.getElementById('pdate').textContent=fmtDate(m.k);
   document.getElementById('ptime').textContent=fmtTime(m.k)+' (local)';
   document.getElementById('pgrp').textContent=`Grupo ${m.g} · J${m.j}`;
@@ -438,7 +438,7 @@ function addSel(){
   const pick=document.getElementById('spick').value.trim();
   const odd=parseFloat(document.getElementById('sodd').value);
   if(!pick||isNaN(odd)||odd<1.01)return;
-  const ml=curMatch?`${fl(curMatch.h)} ${curMatch.h} vs ${fl(curMatch.a)} ${curMatch.a}`:'(sin partido)';
+  const ml=curMatch?`${flEmoji(curMatch.h)} ${curMatch.h} vs ${flEmoji(curMatch.a)} ${curMatch.a}`:'(sin partido)';
   sels.push({match:ml,pick,odd});
   renderSels();
   autoFillValue();
@@ -455,6 +455,22 @@ function renderSels(){
     </li>`).join('');
 }
 
+
+
+function flifyText(txt){
+  // Replace "EMOJI TeamName" patterns with img flag + TeamName
+  const teams = Object.keys(FC);
+  let out = txt;
+  teams.forEach(t=>{
+    const em = flEmoji(t);
+    const code = FC[t];
+    if(!code) return;
+    const img = '<img src="https://flagcdn.com/20x15/'+code+'.png" style="width:20px;height:15px;vertical-align:middle;margin-right:3px" alt="'+t+'">';
+    out = out.replace(em+' '+t, img+t);
+    out = out.replace(em+t, img+t);
+  });
+  return out;
+}
 
 function autoFillValue(){
   const btype = document.getElementById('btype').value;
@@ -578,18 +594,53 @@ async function sendAlertToTelegram(id){
   });
 }
 
+
+function resolveAlert(id, result){
+  const idx = alerts.findIndex(a=>a.id===id);
+  if(idx<0) return;
+  alerts[idx].resolved = result; // 'win' | 'loss' | 'void'
+  alerts[idx].resolvedAt = new Date().toISOString();
+  saveAlerts();
+  renderAlerts();
+  // Send resolved card to Telegram
+  sendResolvedCard(alerts[idx]);
+  showToast(result==='win'?'✅ Apuesta ganada enviada':'❌ Resultado enviado');
+}
+
+async function sendResolvedCard(a){
+  const captureContainer = document.getElementById('capture-container');
+  captureContainer.innerHTML = '';
+  const cardWrap = document.createElement('div');
+  cardWrap.id = 'tg-card-wrap';
+  cardWrap.style.cssText = 'background:#ffffff;padding:0;width:420px';
+  cardWrap.innerHTML = buildCardHTML(a, true);
+  captureContainer.appendChild(cardWrap);
+  await new Promise(r=>setTimeout(r,400));
+  try{
+    const canvas = await captureElement(cardWrap);
+    const blob = await canvasToBlob(canvas);
+    const caption = buildTgCaption(a);
+    await tgSendPhoto(blob, caption);
+  }catch(e){ console.error('Resolve send error:',e); }
+  captureContainer.innerHTML = '';
+}
+
 function buildTgCaption(a){
   const m = a.match;
   const total = a.sels.reduce((acc,s)=>acc*s.odd,1);
-  const potential = (a.stake*total).toFixed(2);
-  const profit = (a.stake*total-a.stake).toFixed(2);
+  const resolved = a.resolved;
   let txt = '⚽ *ALERTA MUNDIAL 2026*\n';
-  if(m) txt += `${fl(m.h)} *${m.h}* vs ${fl(m.a)} *${m.a}* · Grupo ${m.g} J${m.j}\n`;
-  txt += `📌 *${a.btype.toUpperCase()}*${a.book?' · '+a.book:''}\n`;
-  txt += `💰 Stake: ${a.stake}U · Odd: *${total.toFixed(2)}* · Retorno: *${potential}U*\n`;
-  txt += `📊 Confianza: *${a.conf}%*`;
-  if(a.evData){const s=a.evData.ev>=0?'+':'';txt+=` · Valor: *${s}${a.evData.ev.toFixed(1)}%*`;}
-  txt += '\n\n— _Alerta TS AI · TrueStats AI_';
+  if(m){
+    txt += `${flEmoji(m.h)} *${m.h}* vs ${flEmoji(m.a)} *${m.a}*\n`;
+    txt += `🏟 Grupo ${m.g} · Jornada ${m.j}\n`;
+  }
+  txt += `📊 Confianza: *${a.conf}%*\n`;
+  if(a.evData){const s=a.evData.ev>=0?'+':''; txt+=`📈 Valor: *${s}${a.evData.ev.toFixed(1)}%*\n`;}
+  if(resolved){
+    const icon = resolved==='win'?'✅':resolved==='loss'?'❌':'➖';
+    txt += `${icon} Resultado: *${resolved==='win'?'GANADA':resolved==='loss'?'PERDIDA':'VOID'}*\n`;
+  }
+  txt += `\n🎯 _Alerta TS AI · TrueStats AI_`;
   return txt;
 }
 
@@ -686,19 +737,42 @@ function buildCardHTML(a,forCapture=false){
     :`<div class="ac-teams"><span class="ac-team">${a.btype}</span></div>`;
   let evPill='';
   if(a.evData){const s=a.evData.ev>=0?'+':'';evPill=`<span class="ac-mpill">Valor: <strong style="color:${a.evData.ev>0?'#16a34a':'#dc2626'}">${s}${a.evData.ev.toFixed(1)}%</strong></span>`;}
-  const selesHtml=a.sels.map(s=>`
-    <div class="ac-sel">
-      <div class="ac-sel-l"><div class="ac-sel-match">${s.match}</div><div class="ac-sel-pick">${s.pick}</div></div>
-      <div class="ac-sel-odd">@${s.odd.toFixed(2)}</div>
+  // Group sels by match — show match header once, then picks below
+  const selsByMatch = [];
+  a.sels.forEach(s=>{
+    const last = selsByMatch[selsByMatch.length-1];
+    if(last && last.match===s.match) last.picks.push(s);
+    else selsByMatch.push({match:s.match, picks:[s]});
+  });
+  const selesHtml = selsByMatch.map(group=>`
+    <div class="ac-sel-group">
+      <div class="ac-sel-match-hdr">${flifyText(group.match)}</div>
+      ${group.picks.map(s=>`
+        <div class="ac-sel-row">
+          <div class="ac-sel-pick">${s.pick}</div>
+          <div class="ac-sel-odd">@${s.odd.toFixed(2)}</div>
+        </div>`).join('')}
     </div>`).join('');
   const analysisHtml=a.analysis?`<div class="ac-analysis">${a.analysis}</div>`:'';
   const createdStr=new Date(a.createdAt).toLocaleString('es-ES',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  const resolvedBadge = a.resolved
+    ? `<div style="padding:.375rem 1rem;font-size:11px;font-weight:600;text-align:center;background:${a.resolved==='win'?'#f0fdf4':a.resolved==='loss'?'#fef2f2':'#f8fafc'};color:${a.resolved==='win'?'#16a34a':a.resolved==='loss'?'#dc2626':'#64748b'};border-top:1px solid ${a.resolved==='win'?'#bbf7d0':a.resolved==='loss'?'#fecaca':'#e2e8f0'}">${a.resolved==='win'?'✅ GANADA':a.resolved==='loss'?'❌ PERDIDA':'➖ VOID'}</div>`
+    : '';
+  const resolveButtons = (!forCapture && !a.resolved) ? `
+    <div style="display:flex;gap:5px;padding:.375rem 1rem .5rem;border-top:1px solid var(--bdr-lt)">
+      <span style="font-size:10px;color:var(--text3);align-self:center;flex:1">Resolver:</span>
+      <button class="act-btn" style="background:#f0fdf4;border-color:#86efac;color:#16a34a" onclick="resolveAlert(${a.id},'win')">✅ Ganada</button>
+      <button class="act-btn" style="background:#fef2f2;border-color:#fca5a5;color:#dc2626" onclick="resolveAlert(${a.id},'loss')">❌ Perdida</button>
+      <button class="act-btn" onclick="resolveAlert(${a.id},'void')">➖ Void</button>
+    </div>` : '';
   const actions=forCapture?'':`
     <div class="ac-actions">
       <button class="act-btn send-btn" onclick="sendAlertToTelegram(${a.id})">📤 Mandar alerta</button>
       <button class="act-btn" id="cpbtn-${a.id}" onclick="copyAlertText(${a.id})">📋 Copiar</button>
       <button class="act-btn danger" onclick="deleteAlert(${a.id})">🗑</button>
     </div>
+    ${resolveButtons}
+    ${resolvedBadge}
     <div class="ac-ts">Creada ${createdStr}</div>`;
   return `
     <div class="acard" id="card-${a.id}">
@@ -715,7 +789,7 @@ function buildCardHTML(a,forCapture=false){
           ${teamsHtml}
           <div class="ac-stake-box">
             <div class="ac-stake-lbl">STAKE</div>
-            <div class="ac-stake"><span>U </span>${a.stake}</div>
+            <div class="ac-stake">${a.stake}<span> Uds</span></div>
           </div>
         </div>
       </div>
@@ -741,6 +815,7 @@ function buildCardHTML(a,forCapture=false){
         <span class="lb-left">Alerta TS AI</span>
         <span class="lb-right">TrueStats AI · análisis de valor</span>
       </div>
+      ${resolvedBadge}
       ${actions}
     </div>`;
 }
