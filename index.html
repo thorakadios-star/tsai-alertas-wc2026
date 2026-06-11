@@ -109,22 +109,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ac-stake{font-size:22px;font-weight:700;color:#fff;line-height:1}
 .ac-stake span{font-size:12px;font-weight:400;opacity:.8}
 .ac-meta{display:flex;gap:5px;flex-wrap:wrap;padding:.5rem 1rem;border-bottom:1px solid var(--bdr-lt)}
-.ac-mpill{background:var(--bg);border:1px solid var(--bdr);border-radius:20px;padding:2px 7px;font-size:10px;color:var(--text2)}
+.ac-mpill{background:var(--bg);border:1px solid var(--bdr);border-radius:20px;padding:2px 7px;font-size:11px;color:var(--text2)}
 .ac-mpill strong{color:var(--text1);font-weight:600}
 .ac-sels{padding:.625rem 1rem}
 .ac-sel-group{padding:7px 0;border-bottom:1px solid var(--bdr-lt)}
 .ac-sel-group:last-child{border-bottom:none}
-.ac-sel-match-hdr{font-size:11px;font-weight:600;color:var(--text1);margin-bottom:5px;display:flex;align-items:center;gap:4px}
+.ac-sel-match-hdr{font-size:13px;font-weight:700;color:var(--text1);margin-bottom:6px;display:flex;align-items:center;gap:4px}
 .ac-sel-row{display:flex;align-items:center;justify-content:space-between;padding:2px 0 2px 6px;border-left:2px solid var(--blue)}
 .ac-sel-row+.ac-sel-row{margin-top:4px}
 
 .ac-sel-l{width:100%}
 .ac-sel-match{font-size:11px;font-weight:600;color:var(--text1)}
 .ac-sel-pick{font-size:10px;color:var(--text2);margin-top:1px}
-.ac-sel-odd{font-size:13px;font-weight:700;color:var(--blue);white-space:nowrap;flex-shrink:0}
+.ac-sel-odd{font-size:12px;font-weight:700;color:var(--blue);white-space:nowrap;flex-shrink:0}
 .ac-analysis{margin:0 1rem .625rem;font-size:11px;color:var(--text2);line-height:1.6;padding:8px 10px;background:var(--bg);border-left:3px solid var(--blue);border-radius:0}
 .ac-conf{display:flex;align-items:center;gap:8px;padding:.375rem 1rem .5rem}
-.ac-conf-lbl{font-size:10px;color:var(--text2);white-space:nowrap}
+.ac-conf-lbl{font-size:11px;font-weight:700;color:var(--text1);white-space:nowrap}
 .ac-bar{flex:1;height:4px;background:var(--bdr);border-radius:2px;overflow:hidden}
 .ac-bar-fill{height:100%;background:var(--blue);border-radius:2px}
 .ac-conf-pct{font-size:11px;font-weight:700;color:var(--blue);white-space:nowrap}
@@ -136,7 +136,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ac-fr .profit{font-size:10px;color:var(--grn);font-weight:600;margin-top:2px}
 .ac-logobar{display:flex;align-items:center;justify-content:space-between;padding:.375rem 1rem;border-top:1px solid var(--bdr-lt)}
 .lb-left{font-size:10px;font-weight:700;color:var(--blue);background:var(--blue-lt);border-radius:4px;padding:2px 7px}
-.lb-right{font-size:9px;color:var(--text3);letter-spacing:.06em}
+.lb-right{font-size:9px;font-weight:700;color:var(--text2);letter-spacing:.06em}
 .ac-actions{display:flex;gap:6px;padding:.5rem 1rem;border-top:1px solid var(--bdr-lt)}
 .act-btn{flex:1;font-size:11px;font-weight:500;padding:7px 4px;border-radius:var(--r);cursor:pointer;border:1px solid var(--bdr);background:var(--sur);color:var(--text2);transition:all .15s;text-align:center}
 .act-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-lt)}
@@ -787,16 +787,22 @@ function buildCardHTML(a,forCapture=false){
         </div>
         <div class="ac-body-row">
           ${teamsHtml}
-          <div class="ac-stake-box">
-            <div class="ac-stake-lbl">STAKE</div>
-            <div class="ac-stake">${a.stake}<span> Uds</span></div>
+          <div style="display:flex;align-items:stretch;gap:0;flex-shrink:0">
+            <div class="ac-stake-box">
+              <div class="ac-stake-lbl">CUOTA</div>
+              <div class="ac-stake">${total.toFixed(2)}</div>
+            </div>
+            <div style="width:1px;background:rgba(255,255,255,.3);margin:0 0 0 12px;align-self:stretch"></div>
+            <div class="ac-stake-box">
+              <div class="ac-stake-lbl">STAKE</div>
+              <div class="ac-stake">${a.stake}<span> Uds</span></div>
+            </div>
           </div>
         </div>
       </div>
       <div class="ac-meta">
         ${m?`<span class="ac-mpill"><strong>Grupo ${m.g} · J${m.j}</strong></span>`:''}
         ${m?`<span class="ac-mpill">${dateStr} · ${timeStr}</span>`:''}
-        <span class="ac-mpill">Odd: <strong>${total.toFixed(2)}</strong></span>
         <span class="ac-mpill">Retorno: <strong style="color:#185FA5">U${potential}</strong></span>
         ${evPill}
       </div>
@@ -811,8 +817,9 @@ function buildCardHTML(a,forCapture=false){
         <div class="ac-fl"><div class="lbl">RETORNO POTENCIAL</div><div class="val">U${potential}</div></div>
         <div class="ac-fr"><div class="lbl">BENEFICIO NETO</div><div class="val">U${profit}</div><div class="profit">+U${profit} si acierta</div></div>
       </div>
-      <div class="ac-logobar">
+      <div class="ac-logobar" style="display:flex;align-items:center;justify-content:space-between;padding:.5rem 1rem;border-top:1px solid var(--bdr-lt)">
         <span class="lb-left">Alerta TS AI</span>
+        <span style="font-size:9px;color:var(--text3);letter-spacing:.04em">🕐 ${new Date(a.createdAt).toLocaleString('es-ES',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</span>
         <span class="lb-right">TrueStats AI · análisis de valor</span>
       </div>
       ${resolvedBadge}
