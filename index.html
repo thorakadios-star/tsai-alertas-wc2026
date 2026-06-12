@@ -761,6 +761,28 @@ function deleteAlert(id){
 }
 
 // ── BUILD CARD HTML (for DOM and share) ──
+function buildOverlayHTML(a){
+  if(!a.resolved) return '';
+  const total = a.sels.reduce((acc,s)=>acc*s.odd,1);
+  const isWin  = a.resolved==='win';
+  const isLoss = a.resolved==='loss';
+  const cls    = isWin?'win':isLoss?'loss':'void';
+  const icon   = isWin?'ti-trophy':isLoss?'ti-x':'ti-minus';
+  const status = isWin?'Ganado':isLoss?'Perdido':'Nulo';
+  const amount = isWin ? '+'+((a.stake*total)-a.stake).toFixed(2)
+                       : isLoss ? '-'+parseFloat(a.stake).toFixed(2) : '0.00';
+  const sublbl = isWin?'Beneficio':isLoss?'Pérdida':'Devuelto';
+  return '<div class="result-overlay">'
+    +'<div class="result-overlay-bg"></div>'
+    +'<div class="result-badge '+cls+'">'
+    +'<i class="ti '+icon+'" aria-hidden="true"></i>'
+    +'<div class="result-status">'+status+'</div>'
+    +'<div class="result-detail">@'+total.toFixed(2)+' · Stake '+a.stake+' Uds</div>'
+    +'<div class="result-amount">'+amount+' Uds</div>'
+    +'<div class="result-sublbl">'+sublbl+'</div>'
+    +'</div></div>';
+}
+
 function buildCardHTML(a,forCapture=false){
   const m=a.match;
   const total=a.sels.reduce((acc,s)=>acc*s.odd,1);
@@ -823,17 +845,7 @@ const selesHtml = selsByMatch.map(group=>`
     ${resolvedBadge}
     <div class="ac-ts">Creada ${createdStr}</div>
     </div>
-    ${a.resolved ? `
-    <div class="result-overlay">
-      <div class="result-overlay-bg"></div>
-      <div class="result-badge ${a.resolved==='win'?'win':a.resolved==='loss'?'loss':'void'}">
-        <i class="ti ${a.resolved==='win'?'ti-trophy':a.resolved==='loss'?'ti-x':'ti-minus'}" aria-hidden="true"></i>
-        <div class="result-status">${a.resolved==='win'?'Ganado':a.resolved==='loss'?'Perdido':'Nulo'}</div>
-        <div class="result-detail">@${a.sels.reduce((acc,s)=>acc*s.odd,1).toFixed(2)} · Stake ${a.stake} Uds</div>
-        <div class="result-amount">${a.resolved==='win'?'+'+((a.stake*a.sels.reduce((acc,s)=>acc*s.odd,1))-a.stake).toFixed(2):a.resolved==='loss'?'-'+parseFloat(a.stake).toFixed(2):'0.00'} Uds</div>
-        <div class="result-sublbl">${a.resolved==='win'?'Beneficio':a.resolved==='loss'?'Pérdida':'Devuelto'}</div>
-      </div>
-    </div>` : ''}
+    ${buildOverlayHTML(a)}
     </div>`; 
   return cardStyles + `
     <div class="acard-outer">
