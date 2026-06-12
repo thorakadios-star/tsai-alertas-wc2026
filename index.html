@@ -632,34 +632,44 @@ async function sendAlertToTelegram(id){
 }
 
 
-function resolveAlert(id, result){
+async function resolveAlert(id, result){
   const idx = alerts.findIndex(a=>a.id===id);
   if(idx<0) return;
   alerts[idx].resolved = result; // 'win' | 'loss' | 'void'
   alerts[idx].resolvedAt = new Date().toISOString();
   saveAlerts();
   renderAlerts();
-  // Send resolved card to Telegram
+  showToast(result==='win'?'✅ Ganada':result==='loss'?'❌ Perdida':'➖ Nula');
+  // Wait for DOM to update then capture
+  await new Promise(r=>setTimeout(r,500));
   sendResolvedCard(alerts[idx]);
-  showToast(result==='win'?'✅ Apuesta ganada enviada':'❌ Resultado enviado');
 }
 
 async function sendResolvedCard(a){
-  const captureContainer = document.getElementById('capture-container');
-  captureContainer.innerHTML = '';
-  const cardWrap = document.createElement('div');
-  cardWrap.id = 'tg-card-wrap';
-  cardWrap.style.cssText = 'background:#ffffff;padding:0;width:420px';
-  cardWrap.innerHTML = buildCardHTML(a, true);
-  captureContainer.appendChild(cardWrap);
-  await new Promise(r=>setTimeout(r,400));
+  showToast('📸 Capturando resultado...');
+  await new Promise(r=>setTimeout(r,300));
+  // Capture the VISIBLE card already in the DOM (after renderAlerts)
+  const cardEl = document.querySelector('#card-' + a.id + ' .acard');
+  const outerEl = document.getElementById('card-' + a.id);
+  const target = outerEl || cardEl;
+  if(!target){ showToast('❌ Card no encontrada'); return; }
   try{
-    const canvas = await captureElement(cardWrap);
+    const canvas = await html2canvas(target, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      allowTaint: true
+    });
     const blob = await canvasToBlob(canvas);
     const caption = buildTgCaption(a);
-    await tgSendPhoto(blob, caption);
-  }catch(e){ console.error('Resolve send error:',e); }
-  captureContainer.innerHTML = '';
+    const ok = await tgSendPhoto(blob, caption);
+    if(ok) showToast('✅ Resultado enviado a Telegram');
+    else showToast('❌ Error al enviar');
+  }catch(e){
+    showToast('❌ Error: '+e.message);
+    console.error('Resolve send error:',e);
+  }
 }
 
 function buildTgCaption(a){
