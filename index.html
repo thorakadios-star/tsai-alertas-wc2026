@@ -104,7 +104,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ac-flag{font-size:16px;line-height:1}
 .ac-team{font-size:13px;font-weight:600;color:#fff}
 .ac-vs{font-size:10px;color:rgba(255,255,255,.65)}
-.ac-stake-box{text-align:right;flex-shrink:0}
+.ac-stake-box{text-align:right;flex-shrink:0;padding:0}
 .ac-stake-lbl{font-size:9px;color:rgba(255,255,255,.65);letter-spacing:.1em}
 .ac-stake{font-size:22px;font-weight:700;color:#fff;line-height:1}
 .ac-stake span{font-size:12px;font-weight:400;opacity:.8}
@@ -272,6 +272,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div><div class="vlbl">Cuota justa</div><div class="vres" id="vfair">—</div></div>
         <div class="varrow">⇄</div>
         <div><div class="vlbl">Valor esperado</div><div class="vres" id="vev">—</div></div>
+      </div>
+      <div id="vpcts" style="display:none;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--blue-bd);display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <span style="font-size:11px;color:var(--blue-dk);font-weight:500">Casa: <strong id="vcasa">—</strong></span>
+        <span style="font-size:11px;color:var(--blue-dk)">·</span>
+        <span style="font-size:11px;color:var(--blue-dk);font-weight:500">AI: <strong id="vai" style="color:#185FA5">—</strong></span>
+        <span style="font-size:11px;color:var(--blue-dk)">·</span>
+        <span style="font-size:11px;font-weight:600" id="vvalor">—</span>
       </div>
     </div>
 
@@ -468,7 +475,20 @@ function calcV(){
   if(!isNaN(odd)&&!isNaN(prob)&&odd>=1.01&&prob>0&&prob<100){
     const ev=((prob/100)*odd-1)*100;const s=ev>=0?'+':'';
     document.getElementById('vev').innerHTML=`<span class="badge ${ev>0?'bp':ev<0?'bn':'bz'}">${s}${ev.toFixed(1)}%</span>`;
-  }else{document.getElementById('vev').innerHTML='—';}
+    // Update summary row
+    const casaEl=document.getElementById('vcasa');
+    const aiEl=document.getElementById('vai');
+    const valEl=document.getElementById('vvalor');
+    const pctsEl=document.getElementById('vpcts');
+    if(casaEl){ casaEl.textContent=(100/odd).toFixed(1)+'%'; }
+    if(aiEl){ aiEl.textContent=prob.toFixed(1)+'%'; }
+    if(valEl){ valEl.textContent=(s+ev.toFixed(1)+'%'); valEl.style.color=ev>0?'#3B6D11':'#A32D2D'; }
+    if(pctsEl){ pctsEl.style.display='flex'; }
+  }else{
+    document.getElementById('vev').innerHTML='—';
+    const pctsEl=document.getElementById('vpcts');
+    if(pctsEl) pctsEl.style.display='none';
+  }
 }
 
 function addSel(){
@@ -865,7 +885,7 @@ function buildCardHTML(a,forCapture=false){
     ?`<div class="ac-teams"><span class="ac-flag">${fl(m.h)}</span><span class="ac-team">${m.h}</span><span class="ac-vs">vs</span><span class="ac-flag">${fl(m.a)}</span><span class="ac-team">${m.a}</span></div>`
     :`<div class="ac-teams"><span class="ac-team">${a.btype}</span></div>`;
   let evPill='';
-  if(a.evData){const s=a.evData.ev>=0?'+':'';evPill=`<span class="ac-mpill">Valor: <strong style="color:${a.evData.ev>0?'#16a34a':'#dc2626'}">${s}${a.evData.ev.toFixed(1)}%</strong></span>`;}
+  if(a.evData){const s=a.evData.ev>=0?'+':'';evPill=`<span class="ac-mpill">Valor: <strong style="color:${a.evData.ev>0?'#3B6D11':'#A32D2D'}">${s}${a.evData.ev.toFixed(1)}%</strong></span>`;}
   // Group sels by match — show match header once, then picks below
   const selsByMatch = [];
   a.sels.forEach(s=>{
@@ -884,7 +904,8 @@ function buildCardHTML(a,forCapture=false){
   #card-${a.id} .lb-left, #card-${a.id} .lb-right, .tg-card-wrap .lb-left, .tg-card-wrap .lb-right { font-size: ${SZ.logobar}px !important }
   #card-${a.id} .lb-mid, .tg-card-wrap .lb-mid { font-size: ${SZ.timestamp}px !important }
 </style>`;
-const selesHtml = selsByMatch.map(group=>`
+const casaPct = (100/total).toFixed(1);
+  const selesHtml = selsByMatch.map(group=>`
     <div class="ac-sel-group">
       <div class="ac-sel-match-hdr">${flifyText(group.match)}</div>
       ${group.picks.map(s=>`
@@ -930,24 +951,31 @@ const selesHtml = selsByMatch.map(group=>`
         </div>
         <div class="ac-body-row">
           ${teamsHtml}
-          <div style="display:flex;align-items:stretch;gap:0;flex-shrink:0">
-            <div class="ac-stake-box">
+          <div style="display:flex;align-items:stretch;flex-shrink:0">
+            <div style="text-align:right;padding:0 14px 0 0;flex-shrink:0">
               <div class="ac-stake-lbl">CUOTA</div>
               <div class="ac-stake">${total.toFixed(2)}</div>
+              <div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px;font-weight:500">${casaPct}% casa</div>
             </div>
-            <div style="width:1px;background:rgba(255,255,255,.3);margin:0 0 0 12px;align-self:stretch"></div>
-            <div class="ac-stake-box">
+            <div style="width:1px;background:rgba(255,255,255,.3);align-self:stretch;flex-shrink:0"></div>
+            <div style="text-align:right;padding:0 0 0 14px;flex-shrink:0">
               <div class="ac-stake-lbl">STAKE</div>
               <div class="ac-stake">${a.stake}<span> Uds</span></div>
             </div>
           </div>
         </div>
       </div>
-      <div class="ac-meta">
-        ${m?`<span class="ac-mpill"><strong>Grupo ${m.g} · J${m.j}</strong></span>`:''}
-        ${m?`<span class="ac-mpill">${dateStr} · ${timeStr}</span>`:''}
-        <span class="ac-mpill">Retorno: <strong style="color:#185FA5">U${potential}</strong></span>
-        ${evPill}
+      <div class="ac-meta" style="padding:.5rem 1rem;border-bottom:1px solid var(--bdr-lt)">
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px">
+          ${m?`<span class="ac-mpill"><strong>Grupo ${m.g} · J${m.j}</strong></span>`:''}
+          ${m?`<span class="ac-mpill">${dateStr} · ${timeStr}</span>`:''}
+          <span class="ac-mpill">Retorno: <strong style="color:#185FA5">U${potential}</strong></span>
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          ${casaPct ? `<span class="ac-mpill">Casa: <strong>${casaPct}%</strong></span>` : ''}
+          ${a.evData ? `<span class="ac-mpill">AI: <strong style="color:#185FA5">${a.conf}%</strong></span>` : ''}
+          ${evPill}
+        </div>
       </div>
       <div class="ac-sels">${selesHtml}</div>
       ${analysisHtml}
