@@ -646,30 +646,70 @@ async function resolveAlert(id, result){
 }
 
 async function sendResolvedCard(a){
-  showToast('📸 Capturando resultado...');
-  await new Promise(r=>setTimeout(r,300));
-  // Capture the VISIBLE card already in the DOM (after renderAlerts)
-  const cardEl = document.querySelector('#card-' + a.id + ' .acard');
-  const outerEl = document.getElementById('card-' + a.id);
-  const target = outerEl || cardEl;
-  if(!target){ showToast('❌ Card no encontrada'); return; }
+  showToast('📸 Generando imagen...');
+  await new Promise(r=>setTimeout(r,200));
+
+  const total = a.sels.reduce((acc,s)=>acc*s.odd,1);
+  const isWin  = a.resolved==='win';
+  const isLoss = a.resolved==='loss';
+  const bg     = isWin?'#085041':isLoss?'#501313':'#2C2C2A';
+  const border = isWin?'#1D9E75':isLoss?'#E24B4A':'#888780';
+  const iconClr= isWin?'#5DCAA5':isLoss?'#F09595':'#B4B2A9';
+  const status = isWin?'GANADO':isLoss?'PERDIDO':'NULO';
+  const stClr  = isWin?'#9FE1CB':isLoss?'#F7C1C1':'#D3D1C7';
+  const amount = isWin?'+'+((a.stake*total)-a.stake).toFixed(2):isLoss?'-'+parseFloat(a.stake).toFixed(2):'0.00';
+  const sublbl = isWin?'BENEFICIO':isLoss?'PÉRDIDA':'DEVUELTO';
+  const sublClr= isWin?'#1D9E75':isLoss?'#A32D2D':'#5F5E5A';
+  const iconSvg = isWin
+    ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="'+iconClr+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>'
+    : isLoss
+    ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="'+iconClr+'" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+    : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="'+iconClr+'" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+
+  const cardEl = document.getElementById('card-'+a.id);
+  if(!cardEl){ showToast('❌ Card no encontrada'); return; }
+
+  // Clone ONLY the header + meta pills parts
+  const hdr   = cardEl.querySelector('.ac-hdr');
+  const meta  = cardEl.querySelector('.ac-meta');
+  if(!hdr){ showToast('❌ Header no encontrado'); return; }
+
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:420px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0';
+
+  wrapper.appendChild(hdr.cloneNode(true));
+  if(meta) wrapper.appendChild(meta.cloneNode(true));
+
+  // Badge
+  const badge = document.createElement('div');
+  badge.style.cssText = 'background:'+bg+';padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:3px solid '+border;
+  badge.innerHTML =
+    '<div style="display:flex;align-items:center;gap:12px">'
+    +'<div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid '+border+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'+iconSvg+'</div>'
+    +'<div>'
+    +'<div style="font-size:18px;font-weight:700;color:'+stClr+';letter-spacing:.04em;font-family:-apple-system,sans-serif">'+status+'</div>'
+    +'<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;font-family:-apple-system,sans-serif">@'+total.toFixed(2)+' · Stake '+a.stake+' Uds</div>'
+    +'</div>'
+    +'</div>'
+    +'<div style="text-align:right">'
+    +'<div style="font-size:24px;font-weight:700;color:'+iconClr+';font-family:-apple-system,sans-serif">'+amount+' Uds</div>'
+    +'<div style="font-size:10px;font-weight:700;color:'+sublClr+';letter-spacing:.12em;margin-top:3px;font-family:-apple-system,sans-serif">'+sublbl+'</div>'
+    +'</div>';
+  wrapper.appendChild(badge);
+  document.body.appendChild(wrapper);
+
+  await new Promise(r=>setTimeout(r,400));
   try{
-    const canvas = await html2canvas(target, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-      allowTaint: true
-    });
+    const canvas = await html2canvas(wrapper,{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,allowTaint:true});
     const blob = await canvasToBlob(canvas);
-    const caption = buildTgCaption(a);
-    const ok = await tgSendPhoto(blob, caption);
-    if(ok) showToast('✅ Resultado enviado a Telegram');
+    const ok = await tgSendPhoto(blob,'');
+    if(ok) showToast('✅ Resultado enviado');
     else showToast('❌ Error al enviar');
   }catch(e){
     showToast('❌ Error: '+e.message);
-    console.error('Resolve send error:',e);
+    console.error(e);
   }
+  document.body.removeChild(wrapper);
 }
 
 function buildTgCaption(a){
