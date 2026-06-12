@@ -766,21 +766,41 @@ function buildOverlayHTML(a){
   const total = a.sels.reduce((acc,s)=>acc*s.odd,1);
   const isWin  = a.resolved==='win';
   const isLoss = a.resolved==='loss';
-  const cls    = isWin?'win':isLoss?'loss':'void';
-  const icon   = isWin?'ti-trophy':isLoss?'ti-x':'ti-minus';
-  const status = isWin?'Ganado':isLoss?'Perdido':'Nulo';
-  const amount = isWin ? '+'+((a.stake*total)-a.stake).toFixed(2)
-                       : isLoss ? '-'+parseFloat(a.stake).toFixed(2) : '0.00';
-  const sublbl = isWin?'Beneficio':isLoss?'Pérdida':'Devuelto';
-  return '<div class="result-overlay">'
-    +'<div class="result-overlay-bg"></div>'
-    +'<div class="result-badge '+cls+'">'
-    +'<i class="ti '+icon+'" aria-hidden="true"></i>'
-    +'<div class="result-status">'+status+'</div>'
-    +'<div class="result-detail">@'+total.toFixed(2)+' · Stake '+a.stake+' Uds</div>'
-    +'<div class="result-amount">'+amount+' Uds</div>'
-    +'<div class="result-sublbl">'+sublbl+'</div>'
-    +'</div></div>';
+  const bg     = isWin ? '#085041' : isLoss ? '#501313' : '#2C2C2A';
+  const border = isWin ? '#1D9E75' : isLoss ? '#E24B4A' : '#888780';
+  const iconCls= isWin ? 'ti-trophy' : isLoss ? 'ti-x' : 'ti-minus';
+  const iconClr= isWin ? '#5DCAA5' : isLoss ? '#F09595' : '#B4B2A9';
+  const status = isWin ? 'GANADO' : isLoss ? 'PERDIDO' : 'NULO';
+  const stClr  = isWin ? '#9FE1CB' : isLoss ? '#F7C1C1' : '#D3D1C7';
+  const amount = isWin
+    ? '+' + ((a.stake * total) - a.stake).toFixed(2)
+    : isLoss ? '-' + parseFloat(a.stake).toFixed(2) : '0.00';
+  const sublbl = isWin ? 'BENEFICIO' : isLoss ? 'PÉRDIDA' : 'DEVUELTO';
+  const sublClr= isWin ? '#1D9E75' : isLoss ? '#A32D2D' : '#5F5E5A';
+  return '<div style="'
+    + 'margin:0;padding:14px 16px;'
+    + 'background:' + bg + ';'
+    + 'border-top:3px solid ' + border + ';'
+    + 'border-bottom:3px solid ' + border + ';'
+    + 'display:flex;align-items:center;justify-content:space-between;gap:12px">'
+    + '<div style="display:flex;align-items:center;gap:12px">'
+    + '<div style="width:44px;height:44px;border-radius:50%;'
+    + 'background:rgba(255,255,255,.12);border:2px solid ' + border + ';'
+    + 'display:flex;align-items:center;justify-content:center;flex-shrink:0">'
+    + '<i class="ti ' + iconCls + '" style="font-size:20px;color:' + iconClr + '"></i>'
+    + '</div>'
+    + '<div>'
+    + '<div style="font-size:18px;font-weight:700;color:' + stClr + ';letter-spacing:.05em">' + status + '</div>'
+    + '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">'
+    + '@' + total.toFixed(2) + ' · Stake ' + a.stake + ' Uds'
+    + '</div>'
+    + '</div>'
+    + '</div>'
+    + '<div style="text-align:right">'
+    + '<div style="font-size:22px;font-weight:700;color:' + iconClr + '">' + amount + ' Uds</div>'
+    + '<div style="font-size:10px;font-weight:700;color:' + sublClr + ';letter-spacing:.1em;margin-top:2px">' + sublbl + '</div>'
+    + '</div>'
+    + '</div>';
 }
 
 function buildCardHTML(a,forCapture=false){
