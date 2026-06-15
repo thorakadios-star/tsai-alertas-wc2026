@@ -361,7 +361,7 @@ async function cloudLoad(){
   try{
     const rows = await sbFetch(SB_TABLE+'?order=id.desc');
     if(!rows||!rows.length) return [];
-    return rows.map(r=>r.data);
+    return rows.map(r=>r.data).filter(a=>a&&a.id&&Array.isArray(a.sels));
   }catch(e){ return []; }
 }
 
@@ -669,7 +669,7 @@ function resetForm(){
 // BUILD CARD HTML
 function buildCardHTML(a, forCapture){
   const m=a.match;
-  const total=a.sels.reduce((acc,s)=>acc*s.odd,1);
+  const total=(a.sels||[]).reduce((acc,s)=>acc*s.odd,1);
   const potential=(a.stake*total).toFixed(2);
   const profit=(a.stake*total-a.stake).toFixed(2);
   const dateStr=m&&!m.isTeam?fmtDate(m.k):'';
@@ -776,7 +776,7 @@ function buildCardHTML(a, forCapture){
 // OVERLAY (inline for html2canvas)
 function buildOverlay(a){
   if(!a.resolved) return '';
-  const total=a.sels.reduce((acc,s)=>acc*s.odd,1);
+  const total=(a.sels||[]).reduce((acc,s)=>acc*s.odd,1);
   const isWin=a.resolved==='win', isLoss=a.resolved==='loss', isCash=a.resolved==='cashout';
   let bg,border,iconClr,stClr,status,amount,sublbl,sublClr,iconSvg;
   if(isCash){
@@ -897,7 +897,7 @@ async function canvasToBlob(canvas){
 // SEND ALERT (banner + 10s countdown + card)
 async function sendAlert(id){
   const a=alerts.find(x=>x.id===id); if(!a) return;
-  const total=a.sels.reduce((acc,s)=>acc*s.odd,1);
+  const total=(a.sels||[]).reduce((acc,s)=>acc*s.odd,1);
   // Banner
   const bannerWrap=document.createElement('div');
   bannerWrap.style.cssText='position:fixed;left:-9999px;top:0;background:#111116;z-index:-1;width:500px';
@@ -970,7 +970,7 @@ function cancelCountdown(){
 // SEND RESOLVED CARD (header + badge)
 async function sendResolvedCard(a){
   showToast('📸 Capturando resultado…');
-  const total=a.sels.reduce((acc,s)=>acc*s.odd,1);
+  const total=(a.sels||[]).reduce((acc,s)=>acc*s.odd,1);
   const cardEl=document.getElementById('card-'+a.id);
   if(!cardEl){ showToast('❌ Card no encontrada'); return; }
   const hdr=cardEl.querySelector('.ac-hdr');
@@ -1072,7 +1072,7 @@ async function sendBalanceChart(){
 // COPY TEXT
 function copyText(id){
   const a=alerts.find(x=>x.id===id); if(!a) return;
-  const m=a.match; const total=a.sels.reduce((acc,s)=>acc*s.odd,1);
+  const m=a.match; const total=(a.sels||[]).reduce((acc,s)=>acc*s.odd,1);
   const potential=(a.stake*total).toFixed(2); const profit=(a.stake*total-a.stake).toFixed(2);
   let txt='⚽ ALERTA MUNDIAL 2026\n';
   if(m&&m.isTeam) txt+=fe(m.team)+' '+m.team+' · Actuación de Equipo\n';
@@ -1122,6 +1122,9 @@ const logoEl=document.getElementById('logo-data'); if(logoEl) document.getElemen
 async function syncOnLoad(){
   showToast('☁️ Sincronizando…');
   try{
+    // 0. Delete test row if exists
+    await sbFetch(SB_TABLE+'?id=eq.999999', {method:'DELETE'});
+    await sbFetch(SB_TABLE+'?id=eq.1', {method:'DELETE'});
     // 1. Load from cloud
     const cloudAlerts = await cloudLoad();
     
