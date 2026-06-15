@@ -703,7 +703,7 @@ function buildCardHTML(a, forCapture){
 
   // Selections grouped by match
   const groups=[];
-  a.sels.forEach(s=>{
+  (a.sels||[]).forEach(s=>{
     const last=groups[groups.length-1];
     if(last&&last.match===s.match) last.picks.push(s);
     else groups.push({match:s.match, picks:[s]});
@@ -998,7 +998,7 @@ function calcBalance(){
   let balance=0, wins=0, losses=0, totalOdd=0, cnt=0;
   const pts=[{y:0,profit:0}];
   [...res].reverse().forEach(a=>{
-    const t=a.sels.reduce((acc,s)=>acc*s.odd,1);
+    const t=(a.sels||[]).reduce((acc,s)=>acc*s.odd,1);
     totalOdd+=t; cnt++;
     let profit=0;
     if(a.resolved==='win'){ profit=(a.stake*t)-a.stake; wins++; }
@@ -1082,7 +1082,7 @@ function copyText(id){
   txt+='📊 Confianza: '+a.conf+'%';
   if(a.evData){ const s=a.evData.ev>=0?'+':''; txt+=' · Valor: '+s+a.evData.ev.toFixed(1)+'%'; }
   txt+='\n\nSelecciones:\n';
-  a.sels.forEach(s=>{ txt+='• '+s.match+' → '+s.pick+' @'+s.odd.toFixed(2)+'\n'; });
+  (a.sels||[]).forEach(s=>{ txt+='• '+s.match+' → '+s.pick+' @'+s.odd.toFixed(2)+'\n'; });
   txt+='\n— Alerta TS AI · TrueStats AI';
   navigator.clipboard.writeText(txt).then(()=>showToast('📋 Copiado'));
 }
@@ -1140,7 +1140,7 @@ async function syncOnLoad(){
     }
     
     // 4. Merge: cloud + local-only
-    const all = [...cloudAlerts, ...localOnly];
+    const all = [...cloudAlerts, ...localOnly].filter(a=>a&&a.id&&Array.isArray(a.sels));
     all.sort((a,b)=>b.id-a.id);
     alerts = all;
     saveAlerts();
