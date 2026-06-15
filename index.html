@@ -326,6 +326,54 @@ const SZ = {
   timestamp:  9,
 };
 
+// SUPABASE
+const SB_URL = 'https://tpjgmqsdypzvhrdxhttz.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwamdtcXNkeXB6dmhyZHhodHR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjQxMDAsImV4cCI6MjA5NDcwMDEwMH0.QSLAi_x_cOiXqdXgUmXrysvANY3xQcS-TyNXanBETGQ';
+const SB_TABLE = 'tsai_alertas';
+
+async function sbFetch(path, opts={}){
+  const res = await fetch(SB_URL+'/rest/v1/'+path, {
+    headers: {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation', ...opts.headers},
+    ...opts
+  });
+  if(!res.ok) return null;
+  const txt = await res.text();
+  return txt ? JSON.parse(txt) : [];
+}
+
+async function cloudLoad(){
+  try{
+    const rows = await sbFetch(SB_TABLE+'?order=id.desc');
+    if(!rows||!rows.length) return [];
+    return rows.map(r=>r.data);
+  }catch(e){ return []; }
+}
+
+async function cloudSave(alert){
+  try{
+    await sbFetch(SB_TABLE, {
+      method:'POST',
+      body: JSON.stringify({id: alert.id, data: alert}),
+      headers: {'Prefer':'resolution=merge-duplicates,return=minimal'}
+    });
+  }catch(e){}
+}
+
+async function cloudDelete(id){
+  try{
+    await sbFetch(SB_TABLE+'?id=eq.'+id, {method:'DELETE'});
+  }catch(e){}
+}
+
+async function cloudUpdate(alert){
+  try{
+    await sbFetch(SB_TABLE+'?id=eq.'+alert.id, {
+      method:'PATCH',
+      body: JSON.stringify({data: alert})
+    });
+  }catch(e){}
+}
+
 // TELEGRAM
 const TG_TOKEN = '8820929277:AAEUT1lk7CxrzJK0rHtPtBnjnZgvXifKIdc';
 const TG_CHAT  = '-1003812430457';
@@ -442,11 +490,10 @@ const MATCHES=[
 ];
 
 // STATE
-// Load alerts from all known keys and merge
-function loadAlerts(){
+// Load from localStorage (all known keys)
+function loadLocal(){
   const keys = ['tsai_wc26','tsai_alerts'];
-  const all = [];
-  const seen = new Set();
+  const all = []; const seen = new Set();
   keys.forEach(k => {
     try {
       const data = JSON.parse(localStorage.getItem(k)||'[]');
@@ -456,7 +503,7 @@ function loadAlerts(){
   all.sort((a,b) => b.id - a.id);
   return all;
 }
-let curMatch=null, sels=[], alerts=loadAlerts(), cashoutId=null, cdInterval=null;
+let curMatch=null, sels=[], alerts=loadLocal(), cashoutId=null, cdInterval=null;
 function saveAlerts(){ localStorage.setItem('tsai_wc26', JSON.stringify(alerts)); localStorage.removeItem('tsai_alerts'); }
 function fmtDate(k){ return new Date(k).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'}); }
 function fmtTime(k){ return new Date(k).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})+' h'; }
@@ -586,7 +633,7 @@ function generate(){
     evData={odd,prob,ev:((prob/100)*odd-1)*100,fair:(100/prob)};
   }
   const a={id:Date.now(),createdAt:new Date().toISOString(),match:curMatch?{...curMatch}:null,stake,book,btype,conf,sels:[...sels],evData,resolved:null};
-  alerts.unshift(a); saveAlerts(); renderAlerts(); resetForm();
+  alerts.unshift(a); saveAlerts(); renderAlerts(); resetForm(); cloudSave(a);
   showToast('✅ Alerta guardada');
   if(window.innerWidth>860) document.getElementById('main').scrollIntoView({behavior:'smooth'});
   else switchTab('hist');
@@ -758,7 +805,7 @@ function renderAlerts(){
 // DELETE
 function deleteAlert(id){
   if(!confirm('¿Eliminar esta alerta?')) return;
-  alerts=alerts.filter(a=>a.id!==id); saveAlerts(); renderAlerts(); showToast('Alerta eliminada');
+  alerts=alerts.filter(a=>a.id!==id); saveAlerts(); renderAlerts(); showToast('Alerta eliminada'); cloudDelete(id);
 }
 
 // RESOLVE
@@ -766,7 +813,7 @@ async function resolveAlert(id, result){
   const idx=alerts.findIndex(a=>a.id===id); if(idx<0) return;
   alerts[idx].resolved=result;
   alerts[idx].resolvedAt=new Date().toISOString();
-  saveAlerts(); renderAlerts();
+  saveAlerts(); renderAlerts(); cloudUpdate(alerts[idx]);
   showToast(result==='win'?'✅ Ganada':result==='loss'?'❌ Perdida':'➖ Nula');
   await new Promise(r=>setTimeout(r,500));
   await sendResolvedCard(alerts[idx]);
@@ -802,7 +849,7 @@ async function confirmCashout(){
   const idx=alerts.findIndex(a=>a.id===cashoutId); if(idx<0) return;
   alerts[idx].resolved='cashout'; alerts[idx].cashoutOdd=odd;
   alerts[idx].resolvedAt=new Date().toISOString();
-  saveAlerts(); renderAlerts(); showToast('💰 Cierre guardado');
+  saveAlerts(); renderAlerts(); cloudUpdate(alerts[idx]); showToast('💰 Cierre guardado');
   await new Promise(r=>setTimeout(r,500));
   await sendResolvedCard(alerts[idx]);
   await new Promise(r=>setTimeout(r,1500));
@@ -1048,6 +1095,31 @@ checkMobile();
 
 // INIT
 document.getElementById('hdr-logo').src=document.getElementById('logo-data').src;
+
+// Sync on load: merge local + cloud, upload any local-only alerts
+async function syncOnLoad(){
+  showToast('☁️ Sincronizando…');
+  try{
+    const cloudAlerts = await cloudLoad();
+    const localAlerts = alerts;
+    // Merge: cloud takes priority, add any local not in cloud
+    const seen = new Set(cloudAlerts.map(a=>a.id));
+    const localOnly = localAlerts.filter(a=>!seen.has(a.id));
+    // Upload local-only to cloud
+    for(const a of localOnly){ await cloudSave(a); }
+    // Merge all
+    const all = [...cloudAlerts];
+    localOnly.forEach(a=>{ all.push(a); });
+    all.sort((a,b)=>b.id-a.id);
+    alerts = all;
+    saveAlerts();
+    renderAlerts();
+    showToast('✅ '+(cloudAlerts.length+localOnly.length)+' alertas sincronizadas');
+  }catch(e){
+    showToast('⚠️ Sin conexión — modo local');
+  }
+}
+syncOnLoad();
 
 function debugStorage(){
   let msg = 'LocalStorage keys:\n';
