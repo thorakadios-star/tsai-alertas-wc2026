@@ -87,7 +87,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ac-hdr{background:var(--blue);padding:.875rem 1rem}
 .ac-hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .ac-logo{display:flex;align-items:center;gap:7px}
-.ac-logo img{height:22px;width:auto}
+.ac-logo img{height:36px;width:auto}
 .ac-logo-txt{font-size:10px;font-weight:500;color:rgba(255,255,255,.8)}
 .ac-pills{display:flex;gap:5px;flex-wrap:wrap}
 .cpill{background:rgba(255,255,255,.22);padding:2px 7px;border-radius:20px;font-size:10px;font-weight:500;color:#fff;white-space:nowrap}
@@ -888,7 +888,7 @@ async function tgSendPhoto(blob, caption){
   catch(e){ return false; }
 }
 async function captureEl(el){
-  return html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,allowTaint:true});
+  return html2canvas(el,{scale:3,useCORS:true,backgroundColor:'#ffffff',logging:false,allowTaint:true});
 }
 async function canvasToBlob(canvas){
   return new Promise(r=>canvas.toBlob(r,'image/png'));
@@ -936,7 +936,12 @@ async function sendAlert(id){
     const cardEl=document.getElementById('card-'+a.id);
     if(!cardEl){ showToast('❌ Card no encontrada'); return; }
     try{
-      const canvas=await captureEl(cardEl);
+      const acardEl=cardEl.querySelector('.acard')||cardEl;
+      const prevW=acardEl.style.width, prevR=acardEl.style.borderRadius;
+      acardEl.style.width='380px'; acardEl.style.borderRadius='14px';
+      await new Promise(r=>setTimeout(r,100));
+      const canvas=await captureEl(acardEl);
+      acardEl.style.width=prevW; acardEl.style.borderRadius=prevR;
       const blob=await canvasToBlob(canvas);
       const ok=await tgSendPhoto(blob,'');
       showToast(ok?'✅ Card enviada':'❌ Error al enviar');
@@ -977,10 +982,13 @@ async function sendResolvedCard(a){
   const meta=cardEl.querySelector('.ac-meta');
   if(!hdr){ showToast('❌ Header no encontrado'); return; }
   const wrap=document.createElement('div');
-  wrap.style.cssText='position:fixed;left:-9999px;top:0;width:420px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0';
+  wrap.style.cssText='position:fixed;left:-9999px;top:0;width:380px;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,.12)';
   wrap.appendChild(hdr.cloneNode(true));
   if(meta) wrap.appendChild(meta.cloneNode(true));
   wrap.insertAdjacentHTML('beforeend', buildOverlay(a));
+  // Add logobar
+  const logobar = cardEl.querySelector('.ac-logobar');
+  if(logobar) wrap.appendChild(logobar.cloneNode(true));
   document.body.appendChild(wrap);
   await new Promise(r=>setTimeout(r,400));
   try{
@@ -1032,10 +1040,6 @@ async function sendBalanceChart(){
     const r=i===pts.length-1?4:3;
     const str=i===pts.length-1?' stroke="#fff" stroke-width="1.5"':'';
     dots+='<circle cx="'+toX(i)+'" cy="'+toY(p.y)+'" r="'+r+'" fill="'+clr+'"'+str+'/>';
-    if(i>0&&p.profit!==undefined){
-      const s=p.profit>=0?'+':''; const lc=p.profit>=0?'#16a34a':'#dc2626';
-      dots+='<text x="'+toX(i)+'" y="'+(toY(p.y)-6)+'" font-size="7.5" fill="'+lc+'" text-anchor="middle">'+s+p.profit.toFixed(1)+'</text>';
-    }
   });
   const xLbls=pts.map((_,i)=>'<span style="font-size:9px;color:#94a3b8">'+(i===0?'Inicio':'A'+i)+'</span>').join('');
   const svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:110px;display:block"><line x1="0" y1="'+z+'" x2="'+W+'" y2="'+z+'" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4,3"/><path d="'+area+'" fill="#185FA5" opacity=".08"/><polyline points="'+linePts+'" fill="none" stroke="#185FA5" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+dots+'<text x="2" y="'+(z-3)+'" font-size="8" fill="#94a3b8">0</text></svg>';
@@ -1061,7 +1065,7 @@ async function sendBalanceChart(){
   document.body.appendChild(wrap);
   await new Promise(r=>setTimeout(r,400));
   try{
-    const canvas=await captureEl(wrap.querySelector('.bal-card'));
+    wrap.querySelector('.bal-card').style.width='380px'; const canvas=await captureEl(wrap.querySelector('.bal-card'));
     const blob=await canvasToBlob(canvas);
     await tgSendPhoto(blob,'');
     showToast('📊 Gráfica enviada');
