@@ -939,9 +939,11 @@ async function sendAlert(id){
       const acardEl=cardEl.querySelector('.acard')||cardEl;
       const prevW=acardEl.style.width, prevR=acardEl.style.borderRadius;
       acardEl.style.width='500px'; acardEl.style.borderRadius='14px';
+      acardEl.style.fontSize='132%';
       await new Promise(r=>setTimeout(r,100));
       const canvas=await captureEl(acardEl);
       acardEl.style.width=prevW; acardEl.style.borderRadius=prevR;
+      acardEl.style.fontSize='';
       const blob=await canvasToBlob(canvas);
       const ok=await tgSendPhoto(blob,'');
       showToast(ok?'✅ Card enviada':'❌ Error al enviar');
@@ -982,7 +984,7 @@ async function sendResolvedCard(a){
   const meta=cardEl.querySelector('.ac-meta');
   if(!hdr){ showToast('❌ Header no encontrado'); return; }
   const wrap=document.createElement('div');
-  wrap.style.cssText='position:fixed;left:-9999px;top:0;width:500px;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,.12)';
+  wrap.style.cssText='position:fixed;left:-9999px;top:0;width:500px;font-size:132%;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,.12)';
   wrap.appendChild(hdr.cloneNode(true));
   if(meta) wrap.appendChild(meta.cloneNode(true));
   wrap.insertAdjacentHTML('beforeend', buildOverlay(a));
